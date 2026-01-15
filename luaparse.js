@@ -1897,7 +1897,7 @@
             raise(token, errors.noLoopToBreak, token.value);
           return parseBreakStatement();
 				case 'continue': next();
-					if (!flowContext.isInLoop())
+					if (!features.continueAnywhere && !flowContext.isInLoop())
 						raise(token, errors.noLoopToContinue, token.value);
 					return parseContinueStatement();
         case 'do':       next(); return parseDoStatement(flowContext);
@@ -2771,6 +2771,7 @@
       integerDivision: true,
       relaxedBreak: true,
 			breakAnywhere: true,
+			continueAnywhere: true,
 			relaxedReturn: true,
       bitwiseOperators: true,
 			labels: true,

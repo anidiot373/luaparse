@@ -8,3 +8,4 @@ logs
 components
 npm-debug.log
 .vscode
+test.js
