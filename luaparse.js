@@ -260,6 +260,13 @@
       };
     }
 
+		, deferStatement: function(value) {
+			return {
+					type: 'DeferStatement'
+				, argument: value
+			};
+		}
+
     , ifStatement: function(clauses) {
       return {
           type: 'IfStatement'
@@ -1495,7 +1502,7 @@
           return ('goto' === id);
         return false;
       case 5:
-        return 'break' === id || 'local' === id || 'until' === id || 'while' === id;
+        return 'break' === id || 'local' === id || 'until' === id || 'while' === id || 'defer' === id;
       case 6:
         return 'elseif' === id || 'repeat' === id || 'return' === id;
       case 8:
@@ -1835,7 +1842,7 @@
     while (!isBlockFollow(token)) {
       // Return has to be the last statement in a block.
       // Likewise 'break' in Lua older than 5.2
-      if ('return' === token.value || (!features.relaxedBreak && 'break' === token.value)) {
+      if ((!features.relaxedReturn && 'return' === token.value) || (!features.relaxedBreak && 'break' === token.value)) {
         block.push(parseStatement(flowContext));
         break;
       }
@@ -1878,6 +1885,7 @@
         case 'local':    next(); return parseLocalStatement(flowContext);
         case 'if':       next(); return parseIfStatement(flowContext);
         case 'return':   next(); return parseReturnStatement(flowContext);
+				case 'defer':    next(); return parseDeferStatement(flowContext);
         case 'function': next();
           var name = parseFunctionName();
           return parseFunctionDeclaration(name);
@@ -1885,7 +1893,7 @@
         case 'for':      next(); return parseForStatement(flowContext);
         case 'repeat':   next(); return parseRepeatStatement(flowContext);
         case 'break':    next();
-          if (!flowContext.isInLoop())
+          if (!features.breakAnywhere && !flowContext.isInLoop())
             raise(token, errors.noLoopToBreak, token.value);
           return parseBreakStatement();
 				case 'continue': next();
@@ -2010,6 +2018,14 @@
       consume(';'); // grammar tells us ; is optional here.
     }
     return finishNode(ast.returnStatement(expressions));
+  }
+
+	//     defstat ::= 'defer' exp
+
+  function parseDeferStatement(flowContext) {
+    var expression = parseExpression(flowContext);
+
+    return finishNode(ast.deferStatement(expression));
   }
 
   //     if ::= 'if' exp 'then' block {elif} ['else' block] 'end'
@@ -2754,6 +2770,8 @@
 		'6.0': {
       integerDivision: true,
       relaxedBreak: true,
+			breakAnywhere: true,
+			relaxedReturn: true,
       bitwiseOperators: true,
 			labels: true,
       emptyStatement: true,
