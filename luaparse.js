@@ -446,10 +446,10 @@
 			}
 		}
 		
-		, restElement: function(name) {
+		, restElement: function(variable) {
 			return {
 					type: 'RestElement'
-				, name: name
+				, variable: variable
 			}
 		}
 
