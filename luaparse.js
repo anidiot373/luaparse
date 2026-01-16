@@ -2080,7 +2080,7 @@
     if (options.scope) destroyScope();
 
 		expect('end');
-		return ast.usingStatement(variables, expressions, body);
+		return finishNode(ast.usingStatement(variables, expressions, body));
 	}
 
   //     if ::= 'if' exp 'then' block {elif} ['else' block] 'end'
