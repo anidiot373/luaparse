@@ -1,11 +1,3 @@
 node_modules
-docs/*
-!docs/*.md
-!docs/*.1
-!docs/layout/
-dist
-logs
-components
-npm-debug.log
 .vscode
-test.js
+test

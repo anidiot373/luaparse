@@ -1,8 +1,0 @@
-return
-nil                                     -- FAIL
-return;
-;                                       -- FAIL
-// { "luaVersion": "5.2" }
-return;
-return;;                                -- FAIL
-;

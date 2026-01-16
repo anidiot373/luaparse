@@ -1,10 +1,7 @@
-# luaparse
+# luaparse-lua6.0
 
 A Lua parser written in JavaScript, originally written by Oskar Schöldström for his bachelor's thesis at Arcada.
-
-## Installation
-
-Install through `npm install luaparse`.
+This is a modified version to support the custom unofficial lua version: `Lua 6.0`.
 
 ## Usage
 
@@ -20,8 +17,8 @@ AMD
 
 ```js
 require(['luaparse'], function(parser) {
-  var ast = parser.parse('i = 0');
-  console.log(JSON.stringify(ast));
+	var ast = parser.parse('i = 0');
+	console.log(JSON.stringify(ast));
 });
 ```
 
@@ -52,25 +49,25 @@ The available options are:
 - `scope: false` Track identifier scopes.
 - `locations: false` Store location information on each syntax node.
 - `ranges: false` Store the start and end character locations on each syntax
-  node.
+	node.
 - `onCreateNode: null` A callback which will be invoked when a syntax node
-  has been completed. The node which has been created will be passed as the
-  only parameter.
+	has been completed. The node which has been created will be passed as the
+	only parameter.
 - `onCreateScope: null` A callback which will be invoked when a new scope is
-  created.
+	created.
 - `onDestroyScope: null` A callback which will be invoked when the current
-  scope is destroyed.
+	scope is destroyed.
 - `onLocalDeclaration: null` A callback which will be invoked when a local
-  variable is declared. The identifier will be passed as the only parameter.
+	variable is declared. The identifier will be passed as the only parameter.
 - `luaVersion: '5.1'` The version of Lua the parser will target; supported
-  values are `'5.1'`, `'5.2'`, `'5.3'` and `'LuaJIT'`.
+	values are `'5.1'`, `'5.2'`, `'5.3'`, `'6.0'` and `'LuaJIT'`.
 - `extendedIdentifiers: false` Whether to allow code points ≥ U+0080 in
-  identifiers, like LuaJIT does. **Note:** setting `luaVersion: 'LuaJIT'`
-  currently does *not* enable this option; this may change in the future.
+	identifiers, like LuaJIT does. **Note:** setting `luaVersion: 'LuaJIT'`
+	currently does *not* enable this option; this may change in the future.
 - `encodingMode: 'none'` Defines the relation between code points ≥ U+0080
-  appearing in parser input and raw bytes in source code, and how Lua escape
-  sequences in JavaScript strings should be interpreted. See the
-  [Encoding modes](#encoding-modes) section below for more information.
+	appearing in parser input and raw bytes in source code, and how Lua escape
+	sequences in JavaScript strings should be interpreted. See the
+	[Encoding modes](#encoding-modes) section below for more information.
 
 The default options are also exposed through `luaparse.defaultOptions` where
 they can be overriden globally.
@@ -103,26 +100,26 @@ then the returned value will be:
 
 ```js
 {
-  "type": "Chunk",
-  "body": [
-    {
-      "type": "AssignmentStatement",
-      "variables": [
-        {
-          "type": "Identifier",
-          "name": "foo"
-        }
-      ],
-      "init": [
-        {
-          "type": "StringLiteral",
-          "value": "bar",
-          "raw": "\"bar\""
-        }
-      ]
-    }
-  ],
-  "comments": []
+	"type": "Chunk",
+	"body": [
+		{
+			"type": "AssignmentStatement",
+			"variables": [
+				{
+					"type": "Identifier",
+					"name": "foo"
+				}
+			],
+			"init": [
+				{
+					"type": "StringLiteral",
+					"value": "bar",
+					"raw": "\"bar\""
+				}
+			]
+		}
+	],
+	"comments": []
 }
 ```
 
@@ -140,16 +137,16 @@ The `encodingMode` option specifies how these issues should be handled.
 Possible values are as follows:
 
 - `'none'`: Source code characters all pass through as-is and string
-  literals are not interpreted at all; the string literal nodes contain
-  the value `null`. This is the default mode.
+	literals are not interpreted at all; the string literal nodes contain
+	the value `null`. This is the default mode.
 - `'x-user-defined'`: Source code has been decoded with the WHATWG
-  `x-user-defined` encoding; escapes of bytes in the range \[0x80, 0xff]
-  are mapped to the Unicode range \[U+F780, U+F7FF].
+	`x-user-defined` encoding; escapes of bytes in the range \[0x80, 0xff]
+	are mapped to the Unicode range \[U+F780, U+F7FF].
 - `'pseudo-latin1'`: Source code has been decoded with the IANA
-  `iso-8859-1` encoding; escapes of bytes in the range \[0x80, 0xff]
-  are mapped to Unicode range \[U+0080, U+00FF]. Note that this is
-  **not** the same as how WHATWG standards define the `iso-8859-1`
-  encoding, which is to say, as a synonym of `windows-1252`.
+	`iso-8859-1` encoding; escapes of bytes in the range \[0x80, 0xff]
+	are mapped to Unicode range \[U+0080, U+00FF]. Note that this is
+	**not** the same as how WHATWG standards define the `iso-8859-1`
+	encoding, which is to say, as a synonym of `windows-1252`.
 
 ### Custom AST
 
@@ -162,15 +159,15 @@ following:
 
 ```js
 var luaparse = require('luaparse'),
-    events = new (require('events').EventEmitter);
+		events = new (require('events').EventEmitter);
 
 Object.keys(luaparse.ast).forEach(function(type) {
-  var original = luaparse.ast[type];
-  luaparse.ast[type] = function() {
-    var node = original.apply(null, arguments);
-    events.emit(node.type, node);
-    return node;
-  };
+	var original = luaparse.ast[type];
+	luaparse.ast[type] = function() {
+		var node = original.apply(null, arguments);
+		events.emit(node.type, node);
+		return node;
+	};
 });
 events.on('Identifier', function(node) { console.log(node); });
 luaparse.parse('i = "foo"');
@@ -206,101 +203,11 @@ parser.lex(); // { type: 1, value: "<eof>", line: 1, lineStart: 0, range: [11 11
 parser.lex(); // { type: 1, value: "<eof>", line: 1, lineStart: 0, range: [11 11] }
 ```
 
-## Examples
-
-Have a look in the [examples directory](https://github.com/fstirlitz/luaparse/tree/master/examples)
-of the repository for some code examples or check them out [live](https://fstirlitz.github.io/luaparse/examples.html).
-
-## luaparse(1)
-
-The `luaparse` executable can be used in your shell by installing `luaparse` globally using npm:
-
-```bash
-$ npm install -g luaparse
-$ luaparse --help
-
-Usage: luaparse [option]... [file|code]...
-
-Options:
-  -c|--code [code]   parse code snippet
-  -f|--file [file]   parse from file
-  -b|--beautify      output an indenteted AST
-  --[no]-comments    store comments. defaults to true
-  --[no]-scope       store variable scope. defaults to false
-  --[no]-locations   store location data on syntax nodes. defaults to false
-  --[no]-ranges      store start and end character locations. defaults to false
-  -q|--quiet         suppress output
-  -h|--help
-  -v|--version
-  --verbose
-
-Examples:
-  luaparse --no-comments -c "locale foo = \"bar\""
-  luaparse foo.lua bar.lua
-```
-
-Example usage
-
-```bash
-$ luaparse "i = 0"
-
-{"type":"Chunk","body":[{"type":"AssignmentStatement","variables":[{"type":"Identifier","name":"i"}],"init":[{"type":"NumericLiteral","value":0,"raw":"0"}]}],"comments":[]}
-```
-
-## Support
-
-Has been tested in at least IE6+, Firefox 3+, Safari 4+, Chrome 10+, Opera 10+,
-Node 0.4.0+, RingoJS 0.8-0.9, Rhino 1.7R4-1.7R5, Nashorn 1.8.0.
-
-## Quality Assurance
-
-_TL;DR simply run `make qa`. This will run all quality assurance scripts but
-assumes you have it set up correctly._
-
-Begin by cloning the repository and installing the development dependencies
-with `npm install`.
-
-The luaparse test suite uses [testem](https://github.com/airportyh/testem) as a
-test runner, and because of this it's very easy to run the tests using
-different javascript engines or even on locally installed browsers.
-
-### Test runners
-
-- `make test` uses node.
-- `make testem-engines` uses node, ringo and rhino
-1.7R5. This requires that you have the engines installed.
-- `make test-node` uses a custom command line reporter to make the output
-easier on the eyes while practicing TDD.
-- By installing `testem` globally you can also run the tests in a locally
-installed browser.
-
-### Other quality assurance measures
-
-- You can check the function complexity using [complexity-report](https://github.com/philbooth/complexityReport.js)
-using `make complexity-analysis`
-- Running `make coverage` will generate the [coverage report](https://fstirlitz.github.io/luaparse/coverage.html).
-To simply check that all code has coverage you can run `make coverage-analysis`.
-- `make lint`, `make benchmark`, `make profile`.
-
-### Documentation
-
-By running `make docs` all [documentation](https://fstirlitz.github.io/luaparse/)
-will be generated.
-
-## Projects using/extending luaparse
-
-- [luamin](http://mths.be/luamin), a Lua minifier written by Mathias Bynens.
-- [Ace](https://github.com/ajaxorg/ace), an online code editor.
-
-## Acknowledgements
-
-* Initial tests are scaffolded from [yueliang][yueliang] and then manually checked for error.
-* Much of the code is based on [LuaMinify][luaminify], the [Lua][lua] source and [Esprima][esprima]. All awesome projects.
-
 ## License
 
 MIT
 
+[luaparse]: https://github.com/fstirlitz/luaparse
 [luaminify]: https://github.com/stravant/LuaMinify
 [yueliang]: http://yueliang.luaforge.net/
 [lua]: https://www.lua.org
