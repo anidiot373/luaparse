@@ -84,10 +84,12 @@
     // The variable's name will be passed as the only parameter
     , onLocalDeclaration: null
     // The version of Lua targeted by the parser (string; allowed values are
-    // '5.1', '5.2', '5.3').
+    // '5.1', '5.2', '5.3', '6.0' and 'LuaJIT').
     , luaVersion: '5.1'
     // Encoding mode: how to interpret code units higher than U+007F in input
     , encodingMode: 'none'
+		// The file name to use for errors and location markers
+		, fileName: ''
   };
 
   function encodeUTF8(codepoint, highMask) {
@@ -648,13 +650,13 @@
 
     if (token === null || typeof token.line === 'undefined') {
       col = index - lineStart + 1;
-      error = fixupError(new SyntaxError(sprintf('[%1:%2] %3', line, col, message)));
+      error = fixupError(new SyntaxError(sprintf('%1:%2: %3', options.fileName, line, message)));
       error.index = index;
       error.line = line;
       error.column = col;
     } else {
       col = token.range[0] - token.lineStart;
-      error = fixupError(new SyntaxError(sprintf('[%1:%2] %3', token.line, col, message)));
+      error = fixupError(new SyntaxError(sprintf('%1:%2: %3', options.fileName, token.line, message)));
       error.line = token.line;
       error.index = token.range[0];
       error.column = col;
@@ -832,10 +834,12 @@
 
       case 47: // /
         // Check for integer division op (//)
-				if (features.compoundAssignments)
-					if (next === 61) return scanPunctuator(input.charAt(index) + "=");
-        if (features.integerDivision)
-          if (47 === next) return scanPunctuator('//');
+				if (features.integerDivision)
+          if (47 === next)
+						if (features.compoundAssignments && 61 === input.charCodeAt(index + 2)) return scanPunctuator('//=');
+						else return scanPunctuator('//');
+
+				if (features.compoundAssignments && 61 === next) return scanPunctuator('/=');
         return scanPunctuator('/');
 
       case 38: case 124: // & |
@@ -1373,8 +1377,8 @@
       // intercepted in the lexer all location data is set manually.
       if (options.locations) {
         node.loc = {
-            start: { line: lineComment, column: tokenStart - lineStartComment }
-          , end: { line: line, column: index - lineStart }
+            start: { line: lineComment, column: tokenStart - lineStartComment, fileName: options.fileName }
+          , end: { line: line, column: index - lineStart, fileName: options.fileName }
         };
       }
       if (options.ranges) {
@@ -1625,10 +1629,12 @@
           start: {
             line: token.line
           , column: token.range[0] - token.lineStart
+					, fileName: options.fileName
         }
         , end: {
             line: 0
           , column: 0
+					, fileName: options.fileName
         }
       };
     }
@@ -1653,11 +1659,13 @@
       node.loc = {
         start: {
           line: loc.start.line,
-          column: loc.start.column
+          column: loc.start.column,
+					fileName: options.fileName
         },
         end: {
           line: loc.end.line,
-          column: loc.end.column
+          column: loc.end.column,
+					fileName: options.fileName
         }
       };
     }
@@ -2377,7 +2385,7 @@
       return unexpected(token);
     }
 
-		if (['+=', '-=', '*=', '^=', '/=', '%=', '..=', '&=', '|=', '<<=', '>>='].includes(token.value)) {
+		if (['+=', '-=', '*=', '^=', '/=', '//=', '%=', '..=', '&=', '|=', '<<=', '>>='].includes(token.value)) {
 			const operator = token.value;
 
 			next();
