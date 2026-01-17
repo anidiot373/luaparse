@@ -1528,11 +1528,21 @@
           return ('goto' === id);
         return false;
       case 5:
-        return 'break' === id || 'local' === id || 'until' === id || 'while' === id || 'defer' === id || 'using' === id;
+				if ('break' === id || 'local' === id || 'until' === id || 'while' === id)
+					return true
+				if (features.usingStatement && 'using' === id)
+					return true;
+				if (features.deferStatement && 'defer' === id)
+					return true;
+        return false;
       case 6:
         return 'elseif' === id || 'repeat' === id || 'return' === id;
       case 8:
-        return 'function' === id || 'continue' === id;
+				if ('function' === id)
+					return true;
+				if (features.continueStatement)
+        	return ('continue' === id);
+				return false
     }
     return false;
   }
@@ -2880,7 +2890,10 @@
 			unicodeEscapes: true,
 			imaginaryNumbers: true,
 			compoundAssignments: true,
-			javaScriptIntegerSuffixes: true
+			javaScriptIntegerSuffixes: true,
+			continueStatement: true,
+			usingStatement: true,
+			deferStatement: true
 		},
     'LuaJIT': {
       // XXX: LuaJIT language features may depend on compilation options; may need to
