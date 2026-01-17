@@ -221,6 +221,7 @@
     , gotoJumpInLocalScope: '<goto %1> jumps into the scope of local \'%2\''
     , cannotUseVararg: 'cannot use \'...\' outside a vararg function near \'%1\''
     , invalidCodeUnit: 'code unit U+%1 is not allowed in the current encoding mode'
+		, multipleReturns: 'multiple return values are not supported'
   };
 
   // ### Abstract Syntax Tree
@@ -1570,7 +1571,7 @@
   // Scope
   // -----
 
-  // Store each block scope as a an array of identifier names. Each scope is
+  // Store each block scope as an array of identifier names. Each scope is
   // stored in an FILO-array.
   var scopes
     // The current scope index
@@ -2042,7 +2043,8 @@
     return finishNode(ast.repeatStatement(condition, body));
   }
 
-  //     retstat ::= 'return' [exp {',' exp}] [';']
+  //     retstat ::= 'return' [exp {',' exp}] [';'] (Other versions)
+  //     retstat ::= 'return' [exp] [';'] (Lua 6.0)
 
   function parseReturnStatement(flowContext) {
     var expressions = [];
@@ -2052,6 +2054,9 @@
       if (null != expression) {
         expressions.push(expression);
         while (consume(',')) {
+					if (options.luaVersion === '6.0') {
+						raise(null, errors.multipleReturns);
+					}
           expression = parseExpectedExpression(flowContext);
           expressions.push(expression);
         }
