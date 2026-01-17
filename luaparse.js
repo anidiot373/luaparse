@@ -84,8 +84,8 @@
     // The variable's name will be passed as the only parameter
     , onLocalDeclaration: null
     // The version of Lua targeted by the parser (string; allowed values are
-    // '5.1', '5.2', '5.3', '6.0' and 'LuaJIT').
-    , luaVersion: '5.1'
+    // '6.0' only).
+    , luaVersion: '6.0'
     // Encoding mode: how to interpret code units higher than U+007F in input
     , encodingMode: 'none'
 		// The file name to use for errors and location markers
@@ -404,6 +404,13 @@
         , name: name
       };
     }
+
+		, varArg: function(variable) {
+			return {
+					type: 'VarargLiteral'
+				, variable: variable
+			}
+		}
 
     , literal: function(type, value, raw) {
       type = (type === StringLiteral) ? 'StringLiteral'
@@ -2493,8 +2500,15 @@
         }
         // No arguments are allowed after a vararg.
         else if (VarargLiteral === token.type) {
-          flowContext.allowVararg = true;
-          parameters.push(parsePrimaryExpression(flowContext));
+					flowContext.allowVararg = true;
+
+					markLocation();
+
+					next();
+
+					var variable = parseIdentifier();
+
+          parameters.push(finishNode(ast.varArg(variable)));
         } else {
           raiseUnexpectedToken('<name> or \'...\'', token);
         }
@@ -2798,8 +2812,12 @@
           var expressions = [];
           var expression
 					
+					if (token.value === '...') {
+						markLocation();
+					}
+
 					if (consume('...')) {
-						expression = ast.argumentSpreadExpression(parseExpectedExpression(flowContext));
+						expression = finishNode(ast.argumentSpreadExpression(parseExpectedExpression(flowContext)));
 					}
 					else {
 						expression = parseExpression(flowContext);
@@ -2807,9 +2825,13 @@
           if (null != expression) {
             expressions.push(expression);
             while (consume(',')) {
+							if (token.value === '...') {
+								markLocation();
+							}
+
 							if (consume('...')) {
 								expression = parseExpectedExpression(flowContext);
-								expressions.push(ast.argumentSpreadExpression(expression));
+								expressions.push(finishNode(ast.argumentSpreadExpression(expression)));
 							}
 							else {
 								expression = parseExpectedExpression(flowContext);
@@ -2835,10 +2857,10 @@
   }
 
   //     primary ::= String | Numeric | nil | true | false
-  //          | functiondef | tableconstructor | '...'
+  //          | functiondef | tableconstructor
 
   function parsePrimaryExpression(flowContext) {
-    var literals = StringLiteral | NumericLiteral | BooleanLiteral | NilLiteral | VarargLiteral
+    var literals = StringLiteral | NumericLiteral | BooleanLiteral | NilLiteral
       , value = token.value
       , type = token.type
       , marker;
@@ -2891,27 +2913,6 @@
   exports.parse = parse;
 
   var versionFeatures = {
-    '5.1': {
-    },
-    '5.2': {
-      labels: true,
-      emptyStatement: true,
-      hexEscapes: true,
-      skipWhitespaceEscape: true,
-      strictEscapes: true,
-      relaxedBreak: true
-    },
-    '5.3': {
-      labels: true,
-      emptyStatement: true,
-      hexEscapes: true,
-      skipWhitespaceEscape: true,
-      strictEscapes: true,
-      unicodeEscapes: true,
-      bitwiseOperators: true,
-      integerDivision: true,
-      relaxedBreak: true
-    },
 		'6.0': {
       integerDivision: true,
       relaxedBreak: true,
@@ -2932,20 +2933,7 @@
 			continueStatement: true,
 			usingStatement: true,
 			deferStatement: true
-		},
-    'LuaJIT': {
-      // XXX: LuaJIT language features may depend on compilation options; may need to
-      // rethink how to handle this. Specifically, there is a LUAJIT_ENABLE_LUA52COMPAT
-      // that removes contextual goto. Maybe add 'LuaJIT-5.2compat' as well?
-      labels: true,
-      contextualGoto: true,
-      hexEscapes: true,
-      skipWhitespaceEscape: true,
-      strictEscapes: true,
-      unicodeEscapes: true,
-      imaginaryNumbers: true,
-      integerSuffixes: true
-    }
+		}
   };
 
   function parse(_input, _options) {

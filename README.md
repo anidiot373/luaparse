@@ -59,8 +59,8 @@ The available options are:
 	scope is destroyed.
 - `onLocalDeclaration: null` A callback which will be invoked when a local
 	variable is declared. The identifier will be passed as the only parameter.
-- `luaVersion: '5.1'` The version of Lua the parser will target; supported
-	values are `'5.1'`, `'5.2'`, `'5.3'`, `'6.0'` and `'LuaJIT'`.
+- `luaVersion: '6.0'` The version of Lua the parser will target; supported
+	values are only `'6.0'` for now.
 - `extendedIdentifiers: false` Whether to allow code points ≥ U+0080 in
 	identifiers, like LuaJIT does. **Note:** setting `luaVersion: 'LuaJIT'`
 	currently does *not* enable this option; this may change in the future.
